@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Cyber Detection System</title>
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+
+  <!-- Navbar -->
+  <nav class="bg-indigo-400 text-white px-6 py-4 shadow-md">
+    <div class="flex justify-between items-center max-w-6xl mx-auto">
+      <h1 class="text-xl font-bold">Cyber Detection System</h1>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="text-center py-16 bg-white shadow-lg rounded-b-xl">
+    <h2 class="text-3xl font-bold text-gray-900">Detect Suspicious Content Instantly</h2>
+    <p class="mt-4 text-gray-700">Check if a website is phishing OR an email is spam.</p>
+
+    <!-- Forms -->
+    <div class="grid md:grid-cols-2 gap-10 mt-12 max-w-4xl mx-auto">
+
+      <div class="p-6 bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition">
+        <h3 class="text-xl font-semibold text-gray-900">🔗 Website Check</h3>
+        <form class="mt-4 flex items-center gap-2" method="POST" action="/check_url">
+          <input name="url" type="text" placeholder="Enter website URL..."
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            required>
+          <button type="submit"
+            class="bg-indigo-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-600 transition">
+            Check
+          </button>
+        </form>
+      </div>
+
+      <div class="p-6 bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition">
+        <h3 class="text-xl font-semibold text-gray-900">📧 Email Check</h3>
+        <form class="mt-4 flex flex-col gap-4" method="POST" action="/check_email">
+          <textarea name="message" rows="4" placeholder="Paste email content..."
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-300"
+            required></textarea>
+          <button type="submit"
+            class="bg-indigo-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-indigo-600 transition">
+            Check
+          </button>
+        </form>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Result Section -->
+  {% if predict %}
+  <section class="max-w-2xl mx-auto text-center mt-12">
+    <div class="bg-gray-50 border border-gray-200 p-6 rounded-xl shadow-md">
+      <h3 class="text-xl font-semibold text-gray-900">Result:</h3>
+      <p class="mt-2 text-lg font-bold
+        {% if 'Phishing' in predict %} text-red-500
+        {% elif 'Not Spam' in predict %} text-green-600
+        {% elif 'Spam' in predict %} text-red-500
+        {% else %} text-green-600 {% endif %}">
+        {{ predict }}
+      </p>
+      {% if proba %}
+      <p class="mt-2 text-gray-700">
+        Confidence: <span class="font-bold">{{ proba }}%</span>
+      </p>
+      {% endif %}
+
+      {% if phishing and tip %}
+      <div class="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-left shadow-inner">
+        <h4 class="text-red-700 font-bold">💡 Awareness Tip:</h4>
+        <p class="text-red-600 mt-2">{{ tip }}</p>
+      </div>
+      {% endif %}
+
+      {% if spam or tip %}
+      <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg text-left shadow-inner">
+        <h4 class="text-green-700 font-bold">📧 Safety Tip:</h4>
+        <p class="text-green-600 mt-2">🚫 Do not reply to suspicious emails asking for personal info </p>
+      </div>
+      {% endif %}
+
+      {% if phishing or spam %}
+      <form method="POST" action="/report" class="mt-4" onsubmit="return confirmReport();">
+        {% if phishing %}
+        <input type="hidden" name="type" value="url">
+        <input type="hidden" name="content" value="{{ last_url }}">
+        {% elif spam %}
+        <input type="hidden" name="type" value="email">
+        <input type="hidden" name="content" value="{{ last_email }}">
+        {% endif %}
+        <button type="submit"
+          class="bg-red-400 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-500 transition">
+          🚩 Report
+        </button>
+      </form>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Security Tips -->
+  <div class="bg-green-50 border border-green-200 rounded-xl p-4 mt-6 text-center max-w-xl mx-auto shadow-md">
+    <h2 class="font-bold text-green-700 mb-2">🛡️ Think before you click!</h2>
+    <p id="securityTip" class="text-green-600 font-medium"></p>
+    <button onclick="showTip()"
+      class="mt-4 bg-green-400 text-white px-4 py-2 rounded-lg hover:bg-green-500 transition">
+      ⚠️ Protect Yourself From Malicious Sites
+    </button>
+  </div>
+
+  <script>
+    const TIPS = [
+      "🔒 Always check if the website uses HTTPS before entering sensitive data.",
+      "📧 Avoid clicking on links from unknown emails or SMS messages.",
+      "🔑 Never share your OTP, password, or banking details on suspicious sites.",
+      "🚫 Double-check the domain name — phishing sites often mimic real ones.",
+      "🛡️ Keep your browser and antivirus updated for better protection."
+    ];
+
+    function showTip() {
+      const randomTip = TIPS[Math.floor(Math.random() * TIPS.length)];
+      document.getElementById("securityTip").innerText = randomTip;
+    }
+
+    function confirmReport() {
+      return confirm("⚠️ Do you really want to report this content?");
+    }
+  </script>
+
+  <!-- Footer -->
+  <footer class="bg-indigo-400 text-white py-6 mt-12 shadow-inner">
+    <div class="text-center text-sm">
+      © 2025 Cyber Detection System. All rights reserved.
+    </div>
+  </footer>
+
+</body>
+
+</html>
